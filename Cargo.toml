@@ -1,6 +1,13 @@
 [package]
 name = "easy-tracing"
-version = "0.1.0"
+version = "0.1.0-SNANPSHOT"
+description = "A crate to easy use tracing"
+license = "Apache-2.0"
+authors = ["Ray <npcray@gmail.com>"]
+repository = "https://github.com/NPCRay/easy-tracing.git"
+keywords = ["tracing", "opentelemetry", "otel"]
+readme = "README.md"
+categories = ["config", "development-tools::debugging", "accessibility"]
 edition = "2024"
 
 [dependencies]

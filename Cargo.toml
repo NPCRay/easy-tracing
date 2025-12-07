@@ -1,6 +1,6 @@
 [package]
 name = "easy-tracing"
-version = "0.1.0-SNANPSHOT"
+version = "0.2.0"
 description = "A crate to easy use tracing"
 license = "Apache-2.0"
 authors = ["Ray <npcray@gmail.com>"]

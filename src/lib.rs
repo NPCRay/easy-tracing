@@ -1,42 +1,88 @@
+//!
+//!## easy Usage
+//!
+//!```rust
+//! easy_tracing::init(
+//!     "app-name",
+//!     "INFO",
+//!     easy_tracing::LogFormat::Line,
+//!     Some("127.0.0.1:4317"),
+//! );
+//! ```
+//! ## Logging
+//!
+//! Logging is implemented using the `tracing-subscriber` library. After initialization, you can directly output logs through macros like `tracing::info!()` and `tracing::error!()`. Both Line and Json log formats are supported.
+//!
+//! ## Tracing
+//!
+//! Distributed tracing is implemented using the OpenTelemetry SDK. It only supports output via the OTLP gRPC protocol, and by default, trace information will be included in the logs.
+//!
+//! ## Metrics
+//!
+//! Manual metric instrumentation is not supported by default. It is recommended to use [spanmetricsconnector](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/connector/spanmetricsconnector/README.md) to convert span data to metric data for observation rather than manual instrumentation.
+
 mod http;
 mod queue;
 mod scheduler;
 
+///```rust
+/// let client = ClientBuilder::new(reqwest_client)
+///    .with(LoggingMiddleware)
+///    .build();
+///
+///  let resp = client.get("https://xxxxx.com").send().await.unwrap();
+/// ```
+#[cfg(feature = "tracing-reqwest")]
+pub use http::reqwest::ReqwestTraceMiddleware;
+
+///```rust
+/// Router::new().route_layer((
+///             middleware::from_fn(easy_tracing::axum_tracing_middleware),
+///         ))
+/// ```
 #[cfg(feature = "tracing-axum")]
 pub use http::axum::axum_tracing_middleware;
 
+///```rust
+/// easy_tracing::scheduler_tracing(|| {println!("Hello World")}).await;
+/// ```
 #[cfg(feature = "tracing-scheduler")]
 pub use scheduler::scheduler_tracing;
 
+///```rust
+///  let result = easy_tracing::queue_consumer_tracing(|t| {println!(t)}, "Hello World").await;
+/// ```
 #[cfg(feature = "tracing-consumer")]
 pub use queue::consume as queue_consumer_tracing;
 
 use opentelemetry::global;
 use opentelemetry::global::BoxedTracer;
 use opentelemetry::trace::{TraceContextExt, TracerProvider};
+use opentelemetry_otlp::{SpanExporter, WithExportConfig};
 use opentelemetry_sdk::propagation::TraceContextPropagator;
 use opentelemetry_sdk::trace::{Sampler, SdkTracerProvider};
-use serde_json::{Map, Number, Value, json};
+use serde_json::{json, Map, Number, Value};
 use std::sync::{LazyLock, OnceLock};
-use opentelemetry_otlp::{SpanExporter, WithExportConfig};
 use tracing::Span;
 use tracing_opentelemetry::OpenTelemetrySpanExt;
-use tracing_subscriber::EnvFilter;
 use tracing_subscriber::fmt::format::{JsonFields, Writer};
 use tracing_subscriber::fmt::{FmtContext, FormatEvent, FormatFields};
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
+use tracing_subscriber::EnvFilter;
 
 static APP_NAME: OnceLock<String> = OnceLock::new();
 
 static TRACER: LazyLock<BoxedTracer> =
     LazyLock::new(|| global::tracer(APP_NAME.get().unwrap().as_str()));
 
-pub fn init(app_name: &str, log_level: &str, log_format: LogFormat, otel_endpoint: Option<&str>) {
+// init tracing
+//
+pub fn init(app_name: &str, log_level: &str, log_format: LogFormat, otlp_endpoint: Option<&str>) {
     APP_NAME.set(app_name.to_string()).unwrap();
     global::set_text_map_propagator(TraceContextPropagator::new());
     let mut provider_builder = SdkTracerProvider::builder();
-    match otel_endpoint {
+    match otlp_endpoint {
         None => {}
         Some(endpoint) => {
             let exporter = SpanExporter::builder()
@@ -82,9 +128,9 @@ pub fn init(app_name: &str, log_level: &str, log_format: LogFormat, otel_endpoin
     }
 }
 
-
 pub enum LogFormat {
-    Json, Line,
+    Json,
+    Line,
 }
 
 struct JsonTraceIdFormatter;

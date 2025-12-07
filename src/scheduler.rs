@@ -10,7 +10,7 @@ where
     use tracing::{Instrument, error_span};
     use tracing_opentelemetry::OpenTelemetrySpanExt;
 
-    let span = TRACER.start("http middleware");
+    let span = TRACER.start("scheduler middleware");
     let context = Context::current_with_span(span);
 
     let span = error_span!("scheduler",);

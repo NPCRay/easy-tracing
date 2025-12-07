@@ -61,15 +61,15 @@ use opentelemetry::trace::{TraceContextExt, TracerProvider};
 use opentelemetry_otlp::{SpanExporter, WithExportConfig};
 use opentelemetry_sdk::propagation::TraceContextPropagator;
 use opentelemetry_sdk::trace::{Sampler, SdkTracerProvider};
-use serde_json::{json, Map, Number, Value};
+use serde_json::{Map, Number, Value, json};
 use std::sync::{LazyLock, OnceLock};
 use tracing::Span;
 use tracing_opentelemetry::OpenTelemetrySpanExt;
+use tracing_subscriber::EnvFilter;
 use tracing_subscriber::fmt::format::{JsonFields, Writer};
 use tracing_subscriber::fmt::{FmtContext, FormatEvent, FormatFields};
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
-use tracing_subscriber::EnvFilter;
 
 static APP_NAME: OnceLock<String> = OnceLock::new();
 
